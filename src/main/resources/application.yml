@@ -74,6 +74,10 @@ app:
     password: ${ADMIN_PASSWORD:admin123}
     email: ${ADMIN_EMAIL:admin@example.com}
     full-name: ${ADMIN_FULL_NAME:Administrator}
+  rate-limit:
+    max-attempts: ${RATE_LIMIT_MAX_ATTEMPTS:5}
+    attempt-window-seconds: ${RATE_LIMIT_ATTEMPT_WINDOW_SECONDS:300}
+    lockout-duration-seconds: ${RATE_LIMIT_LOCKOUT_DURATION_SECONDS:900}
 
 logging:
   level:
