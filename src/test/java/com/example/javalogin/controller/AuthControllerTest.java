@@ -25,8 +25,12 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Objects;
@@ -50,6 +54,9 @@ class AuthControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private AuthController authController;
 
     @MockBean
     private AuthenticationManager authenticationManager;
@@ -268,5 +275,110 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Logout successful"));
+    }
+
+    @Test
+    void login_shouldReturnForbidden_whenEmailNotVerified() throws Exception {
+        ReflectionTestUtils.setField(authController, "emailVerificationRequired", true);
+        try {
+            LoginRequest request = new LoginRequest("admin", "admin123");
+
+            org.springframework.security.core.userdetails.User principal =
+                    new org.springframework.security.core.userdetails.User(
+                            "admin",
+                            "encoded",
+                            List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+                    );
+            UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken(
+                            principal,
+                            null,
+                            List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+                    );
+
+            when(authenticationManager.authenticate(any())).thenReturn(auth);
+            when(loginAttemptService.isBlocked(any(), any())).thenReturn(false);
+
+            UserResponse response = UserResponse.builder()
+                    .id(1L)
+                    .username("admin")
+                    .email("admin@example.com")
+                    .fullName("Administrator")
+                    .role(Role.ADMIN)
+                    .emailVerified(false)
+                    .build();
+
+            SecurityContext context = org.springframework.security.core.context.SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(auth);
+            org.springframework.security.core.context.SecurityContextHolder.setContext(context);
+
+            when(userService.getCurrentUser()).thenReturn(response);
+
+            String body = Objects.requireNonNull(objectMapper.writeValueAsString(request));
+            mockMvc.perform(post("/api/auth/login")
+                            .contentType("application/json")
+                            .content(body))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.message").value("Please verify your email before logging in."));
+        } finally {
+            ReflectionTestUtils.setField(authController, "emailVerificationRequired", false);
+            org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        }
+    }
+
+    @Test
+    void login_shouldReturnTooManyRequests_whenRateLimited() throws Exception {
+        LoginRequest request = new LoginRequest("admin", "admin123");
+
+        when(loginAttemptService.isBlocked(any(), any())).thenReturn(true);
+
+        String body = Objects.requireNonNull(objectMapper.writeValueAsString(request));
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Too many failed login attempts. Please try again later."));
+    }
+
+    @Test
+    void refresh_shouldReturnUnauthorized_forInvalidToken() throws Exception {
+        TokenRefreshRequest request = new TokenRefreshRequest("invalid-token");
+
+        when(refreshTokenService.findByToken("invalid-token")).thenReturn(Optional.empty());
+
+        String body = Objects.requireNonNull(objectMapper.writeValueAsString(request));
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Invalid refresh token"));
+    }
+
+    @Test
+    void refresh_shouldReturnUnauthorized_forExpiredToken() throws Exception {
+        TokenRefreshRequest request = new TokenRefreshRequest("expired-token");
+
+        User user = User.builder()
+                .id(1L)
+                .username("admin")
+                .build();
+
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setToken("expired-token");
+        refreshToken.setUser(user);
+
+        when(refreshTokenService.findByToken("expired-token")).thenReturn(Optional.of(refreshToken));
+        when(refreshTokenService.isExpired(refreshToken)).thenReturn(true);
+
+        String body = Objects.requireNonNull(objectMapper.writeValueAsString(request));
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Refresh token expired"));
     }
 }

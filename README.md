@@ -68,6 +68,10 @@ EMAIL_VERIFICATION_REQUIRED=false
 MAIL_HOST=localhost
 MAIL_PORT=1025
 MAIL_FROM=noreply@example.com
+
+RATE_LIMIT_MAX_ATTEMPTS=5
+RATE_LIMIT_ATTEMPT_WINDOW_SECONDS=300
+RATE_LIMIT_LOCKOUT_DURATION_SECONDS=900
 ```
 
 > **คำเตือน**: เปลี่ยน `ADMIN_PASSWORD` ทันทีใน production อย่าใช้ default password
@@ -207,6 +211,25 @@ mvnw.cmd clean package
 ```bash
 ./mvnw test
 ```
+
+หรือรันทั้ง build + test:
+
+```bash
+./mvnw clean package
+```
+
+### Test Coverage
+
+โปรเจกต์มี unit tests ครอบคลุบหลักๆ ดังนี้:
+
+| ไฟล์ | สิ่งที่ทดสอบ |
+|------|------------|
+| `AuthControllerTest` | register, login success/failure, token generation, refresh token, verify email, logout, email not verified denial, rate limiting block |
+| `JwtServiceTest` | generate token, validate token, malformed token, extract username, expiration config |
+| `UserServiceTest` | register user, duplicate username/email, get current user, get all users, find by username, create/skip admin seed |
+| `RefreshTokenServiceTest` | create token, find valid/expired token, delete by user, expiration check |
+| `LoginAttemptServiceTest` | block detection, failure recording, success reset, window expiry |
+| `UserDetailsServiceImplTest` | load user by username, user not found, role mapping |
 
 ---
 
