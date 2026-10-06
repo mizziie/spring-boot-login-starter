@@ -80,6 +80,8 @@ app:
     lockout-duration-seconds: ${RATE_LIMIT_LOCKOUT_DURATION_SECONDS:900}
 
 logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%X{requestId}] %-5level %logger{36} - %msg%n"
   level:
     org.springframework.security: DEBUG
     com.example.javalogin: DEBUG

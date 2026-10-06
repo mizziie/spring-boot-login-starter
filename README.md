@@ -72,6 +72,8 @@ MAIL_FROM=noreply@example.com
 RATE_LIMIT_MAX_ATTEMPTS=5
 RATE_LIMIT_ATTEMPT_WINDOW_SECONDS=300
 RATE_LIMIT_LOCKOUT_DURATION_SECONDS=900
+
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:4200
 ```
 
 > **คำเตือน**: เปลี่ยน `ADMIN_PASSWORD` ทันทีใน production อย่าใช้ default password
