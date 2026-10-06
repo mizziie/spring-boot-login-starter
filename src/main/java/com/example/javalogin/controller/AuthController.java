@@ -26,9 +26,11 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -51,6 +53,7 @@ public class AuthController {
     private final EmailVerificationService emailVerificationService;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final SecurityContextRepository securityContextRepository;
 
     @Value("${EMAIL_VERIFICATION_REQUIRED:false}")
     private boolean emailVerificationRequired;
@@ -74,6 +77,11 @@ public class AuthController {
                     )
             );
 
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            securityContextRepository.saveContext(context, httpRequest, null);
+
             UserResponse user = userService.getCurrentUser();
 
             if (emailVerificationRequired && !user.isEmailVerified()) {
@@ -82,7 +90,6 @@ public class AuthController {
                         .body(ApiResponse.error("Please verify your email before logging in."));
             }
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
             httpRequest.getSession(true);
             loginAttemptService.recordSuccess(httpRequest, request.getUsername());
             auditLogService.log(user.getUsername(), "LOGIN_SUCCESS", httpRequest, null);
@@ -114,6 +121,11 @@ public class AuthController {
                             request.getPassword()
                     )
             );
+
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            securityContextRepository.saveContext(context, httpRequest, null);
 
             UserResponse userResponse = userService.getCurrentUser();
             if (emailVerificationRequired && !userResponse.isEmailVerified()) {

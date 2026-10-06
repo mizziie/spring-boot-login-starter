@@ -17,6 +17,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -40,6 +42,11 @@ public class SecurityConfig {
     }
 
     @Bean
+    public SecurityContextRepository securityContextRepository() {
+        return new HttpSessionSecurityContextRepository();
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
@@ -55,6 +62,9 @@ public class SecurityConfig {
             )
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            )
+            .securityContext(context ->
+                context.securityContextRepository(securityContextRepository())
             )
             .exceptionHandling(ex ->
                 ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))

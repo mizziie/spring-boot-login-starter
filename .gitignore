@@ -32,6 +32,14 @@ target/
 .env
 *.log
 
+### Dev / Test artifacts ###
+app-logs.txt
+cookies.txt
+*-cookies.txt
+login.json
+register.json
+john-login.json
+
 ### OS ###
 .DS_Store
 Thumbs.db
