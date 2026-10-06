@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -26,6 +25,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
+    @SuppressWarnings("null")
     public UserResponse registerUser(SignupRequest request, Role role) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new IllegalArgumentException("Username already exists: " + request.getUsername());
@@ -43,7 +43,7 @@ public class UserService {
                 .emailVerified(role != null && role == Role.ADMIN)
                 .build();
 
-        User saved = Objects.requireNonNull(userRepository.save(user));
+        User saved = userRepository.save(user);
         log.info("Registered new user: {}", saved.getUsername());
         return toResponse(saved);
     }
@@ -69,6 +69,7 @@ public class UserService {
     }
 
     @Transactional
+    @SuppressWarnings("null")
     public User createAdminIfAbsent(String username, String password, String email) {
         if (userRepository.existsByUsername(username)) {
             log.info("Admin user '{}' already exists, skipping seed.", username);
@@ -84,7 +85,7 @@ public class UserService {
                 .emailVerified(true)
                 .build();
 
-        User saved = Objects.requireNonNull(userRepository.save(admin));
+        User saved = userRepository.save(admin);
         log.info("Created default admin user: {}", saved.getUsername());
         return saved;
     }

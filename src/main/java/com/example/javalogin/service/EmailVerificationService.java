@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -34,6 +33,7 @@ public class EmailVerificationService {
     private String fromAddress;
 
     @Transactional
+    @SuppressWarnings("null")
     public VerificationToken createVerificationToken(User user) {
         tokenRepository.findByToken(user.getUsername()).ifPresent(tokenRepository::delete);
 
@@ -43,7 +43,7 @@ public class EmailVerificationService {
                 .expiryDate(Instant.now().plusSeconds(24 * 60 * 60))
                 .build();
 
-        return Objects.requireNonNull(tokenRepository.save(token));
+        return tokenRepository.save(token);
     }
 
     @Transactional

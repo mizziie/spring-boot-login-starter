@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,6 +22,7 @@ public class RefreshTokenService {
     private long refreshExpirationMs;
 
     @Transactional
+    @SuppressWarnings("null")
     public RefreshToken createRefreshToken(User user) {
         refreshTokenRepository.deleteByUserId(user.getId());
 
@@ -32,7 +32,7 @@ public class RefreshTokenService {
                 .expiryDate(Instant.now().plusMillis(refreshExpirationMs))
                 .build();
 
-        return Objects.requireNonNull(refreshTokenRepository.save(token));
+        return refreshTokenRepository.save(token);
     }
 
     @Transactional(readOnly = true)
