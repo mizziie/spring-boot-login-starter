@@ -11,8 +11,8 @@ import org.springframework.validation.annotation.Validated;
 @Setter
 public class AdminProperties {
 
-    private String username = "admin";
+    private String username;
     private String password;
-    private String email = "admin@example.com";
-    private String fullName = "Administrator";
+    private String email;
+    private String fullName;
 }

@@ -20,13 +20,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -97,9 +97,10 @@ class AuthControllerTest {
         when(userService.findByUsername("john")).thenReturn(Optional.of(savedUser));
         when(emailVerificationService.createVerificationToken(any())).thenReturn(token);
 
+        String body = Objects.requireNonNull(objectMapper.writeValueAsString(request));
         mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .contentType("application/json")
+                        .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.username").value("john"));
@@ -130,9 +131,10 @@ class AuthControllerTest {
 
         when(userService.getCurrentUser()).thenReturn(response);
 
+        String body = Objects.requireNonNull(objectMapper.writeValueAsString(request));
         mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .contentType("application/json")
+                        .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.username").value("admin"))
@@ -147,9 +149,10 @@ class AuthControllerTest {
         when(authenticationManager.authenticate(any()))
                 .thenThrow(new org.springframework.security.authentication.BadCredentialsException("Bad credentials"));
 
+        String body = Objects.requireNonNull(objectMapper.writeValueAsString(request));
         mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .contentType("application/json")
+                        .content(body))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Invalid username or password"));
