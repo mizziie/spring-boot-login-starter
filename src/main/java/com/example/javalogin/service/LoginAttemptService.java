@@ -16,6 +16,7 @@ import java.time.Instant;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("null")
 public class LoginAttemptService {
 
     private static final String KEY_PREFIX = "login:attempts:";
