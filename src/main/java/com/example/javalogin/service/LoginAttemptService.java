@@ -112,7 +112,9 @@ public class LoginAttemptService {
         private int count;
         private Instant lockedUntil;
 
+        @SuppressWarnings("unused")
         LoginAttemptInfo() {
+            // Default constructor required by Jackson for deserialization
         }
 
         LoginAttemptInfo(Instant firstAttempt, int count, Instant lockedUntil) {
