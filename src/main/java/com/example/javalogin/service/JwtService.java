@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@SuppressWarnings("null")
 public class JwtService {
 
     @Value("${JWT_SECRET:default-secret-key-change-me-in-production-at-least-32-characters}")

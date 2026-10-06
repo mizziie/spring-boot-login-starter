@@ -1,6 +1,5 @@
 package com.example.javalogin.service;
 
-import com.example.javalogin.entity.Role;
 import com.example.javalogin.entity.User;
 import com.example.javalogin.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

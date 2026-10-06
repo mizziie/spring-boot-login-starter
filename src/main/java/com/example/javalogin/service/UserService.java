@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -42,7 +43,7 @@ public class UserService {
                 .emailVerified(role != null && role == Role.ADMIN)
                 .build();
 
-        User saved = userRepository.save(user);
+        User saved = Objects.requireNonNull(userRepository.save(user));
         log.info("Registered new user: {}", saved.getUsername());
         return toResponse(saved);
     }
@@ -83,7 +84,7 @@ public class UserService {
                 .emailVerified(true)
                 .build();
 
-        User saved = userRepository.save(admin);
+        User saved = Objects.requireNonNull(userRepository.save(admin));
         log.info("Created default admin user: {}", saved.getUsername());
         return saved;
     }

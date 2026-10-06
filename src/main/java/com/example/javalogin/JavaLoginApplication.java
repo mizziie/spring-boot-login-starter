@@ -1,9 +1,12 @@
 package com.example.javalogin;
 
+import com.example.javalogin.config.properties.AdminProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
+@EnableConfigurationProperties(AdminProperties.class)
 public class JavaLoginApplication {
 
     public static void main(String[] args) {

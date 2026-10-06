@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -25,7 +27,7 @@ public class AuditLogService {
                     .userAgent(request != null ? request.getHeader("User-Agent") : null)
                     .details(details)
                     .build();
-            auditLogRepository.save(logEntry);
+            var ignored = Objects.requireNonNull(auditLogRepository.save(logEntry));
         } catch (Exception ex) {
             log.error("Failed to write audit log: {}", ex.getMessage());
         }

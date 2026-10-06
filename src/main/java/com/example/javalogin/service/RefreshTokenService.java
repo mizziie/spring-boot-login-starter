@@ -3,13 +3,13 @@ package com.example.javalogin.service;
 import com.example.javalogin.entity.RefreshToken;
 import com.example.javalogin.entity.User;
 import com.example.javalogin.repository.RefreshTokenRepository;
-import com.example.javalogin.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,7 +18,6 @@ import java.util.UUID;
 public class RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
-    private final UserRepository userRepository;
 
     @Value("${JWT_REFRESH_EXPIRATION_MS:604800000}")
     private long refreshExpirationMs;
@@ -33,7 +32,7 @@ public class RefreshTokenService {
                 .expiryDate(Instant.now().plusMillis(refreshExpirationMs))
                 .build();
 
-        return refreshTokenRepository.save(token);
+        return Objects.requireNonNull(refreshTokenRepository.save(token));
     }
 
     @Transactional(readOnly = true)
