@@ -1,0 +1,71 @@
+spring:
+  application:
+    name: java-login-starter
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/javalogin
+    username: javalogin
+    password: javalogin
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${MAIL_STARTTLS:false}
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+
+  session:
+    store-type: redis
+    timeout: 30m
+    redis:
+      namespace: java-login:session
+
+server:
+  servlet:
+    session:
+      cookie:
+        name: JSESSIONID
+        http-only: true
+        secure: false
+        same-site: lax
+      timeout: 30m
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.example.javalogin: DEBUG
