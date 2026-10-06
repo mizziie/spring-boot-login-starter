@@ -3,7 +3,10 @@ package com.example.javalogin.controller;
 import com.example.javalogin.config.SecurityConfig;
 import com.example.javalogin.dto.LoginRequest;
 import com.example.javalogin.dto.SignupRequest;
+import com.example.javalogin.dto.TokenRefreshRequest;
+import com.example.javalogin.dto.TokenResponse;
 import com.example.javalogin.dto.UserResponse;
+import com.example.javalogin.entity.RefreshToken;
 import com.example.javalogin.entity.Role;
 import com.example.javalogin.entity.User;
 import com.example.javalogin.entity.VerificationToken;
@@ -32,6 +35,7 @@ import java.util.Optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -156,5 +160,113 @@ class AuthControllerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Invalid username or password"));
+    }
+
+    @Test
+    void token_shouldReturnAccessAndRefreshToken() throws Exception {
+        LoginRequest request = new LoginRequest("admin", "admin123");
+
+        org.springframework.security.core.userdetails.User principal =
+                new org.springframework.security.core.userdetails.User(
+                        "admin",
+                        "encoded",
+                        List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+                );
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(
+                        principal,
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+                );
+
+        UserResponse userResponse = UserResponse.builder()
+                .id(1L)
+                .username("admin")
+                .email("admin@example.com")
+                .fullName("Administrator")
+                .role(Role.ADMIN)
+                .emailVerified(true)
+                .build();
+
+        User user = User.builder()
+                .id(1L)
+                .username("admin")
+                .password("encoded")
+                .role(Role.ADMIN)
+                .build();
+
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setToken("refresh-token-123");
+
+        when(authenticationManager.authenticate(any())).thenReturn(auth);
+        when(loginAttemptService.isBlocked(any(), any())).thenReturn(false);
+        when(userService.getCurrentUser()).thenReturn(userResponse);
+        when(userService.findByUsername("admin")).thenReturn(Optional.of(user));
+        when(refreshTokenService.createRefreshToken(any())).thenReturn(refreshToken);
+        when(jwtService.generateAccessToken(any())).thenReturn("access-token-123");
+        when(jwtService.getAccessExpirationMs()).thenReturn(900_000L);
+
+        String body = Objects.requireNonNull(objectMapper.writeValueAsString(request));
+        mockMvc.perform(post("/api/auth/token")
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").value("access-token-123"))
+                .andExpect(jsonPath("$.data.refreshToken").value("refresh-token-123"))
+                .andExpect(jsonPath("$.data.tokenType").value("Bearer"));
+    }
+
+    @Test
+    void refresh_shouldReturnNewAccessToken() throws Exception {
+        TokenRefreshRequest request = new TokenRefreshRequest("refresh-token-123");
+
+        User user = User.builder()
+                .id(1L)
+                .username("admin")
+                .password("encoded")
+                .role(Role.ADMIN)
+                .build();
+
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setToken("refresh-token-123");
+        refreshToken.setUser(user);
+
+        when(refreshTokenService.findByToken("refresh-token-123")).thenReturn(Optional.of(refreshToken));
+        when(refreshTokenService.isExpired(refreshToken)).thenReturn(false);
+        when(jwtService.generateAccessToken(any())).thenReturn("new-access-token");
+        when(jwtService.getAccessExpirationMs()).thenReturn(900_000L);
+
+        String body = Objects.requireNonNull(objectMapper.writeValueAsString(request));
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").value("new-access-token"));
+    }
+
+    @Test
+    void verifyEmail_shouldReturnSuccess() throws Exception {
+        User user = User.builder()
+                .id(1L)
+                .username("john")
+                .build();
+
+        when(emailVerificationService.verifyEmail("valid-token")).thenReturn(Optional.of(user));
+
+        mockMvc.perform(get("/api/auth/verify-email")
+                        .param("token", "valid-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Email verified successfully"));
+    }
+
+    @Test
+    void logout_shouldReturnSuccess() throws Exception {
+        mockMvc.perform(post("/api/auth/logout"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Logout successful"));
     }
 }
