@@ -1,6 +1,7 @@
 # spring-boot-login-starter
 
 ![CI](https://github.com/mizziie/spring-boot-login-starter/actions/workflows/ci.yml/badge.svg)
+[![codecov](https://codecov.io/gh/mizziie/spring-boot-login-starter/graph/badge.svg)](https://codecov.io/gh/mizziie/spring-boot-login-starter)
 
 ตัวอย่างโครงสร้าง Spring Boot 3 สำหรับระบบ Login พร้อม:
 
